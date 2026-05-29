@@ -1,4 +1,4 @@
-"InvoiceNo","StockCode","Description","Quantity","InvoiceDate","UnitPrice","CustomerID","Country"
+InvoiceNo,StockCode,Description,Quantity,InvoiceDate,UnitCost,CustomerID,Nation
 "580611","23239","SET OF 4 KNICK KNACK TINS POPPIES","3","2011-12-05 11:49:00","1.65","12748.0","United Kingdom"
 "580611","22442","GROW YOUR OWN FLOWERS SET OF 3","6","2011-12-05 11:49:00","1.95","12748.0","United Kingdom"
 "580612","22471","TV DINNER TRAY AIR HOSTESS ","1","2011-12-05 11:58:00","10.79","","United Kingdom"

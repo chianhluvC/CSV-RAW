@@ -8,7 +8,7 @@ Three test cases cover all real-world scenarios.
 
 | Link | Description |
 |------|-------------|
-| [ETL Upload Portal](https://d14vqntmuruhab.cloudfront.net/) | Upload interface and pipeline monitor |
+| [ETL Upload Portal](https://d38xe3s2e16qjl.cloudfront.net/) | Upload interface and pipeline monitor |
 | [Dashboard](https://etl-dashboard-app-sdhtogaprtskffwsamfn77.streamlit.app/) | Query processed data via Athena |
 | [Raw CSV Repo](https://github.com/chianhluvC/CSV-RAW) | Sample CSV files for all 3 cases |
 

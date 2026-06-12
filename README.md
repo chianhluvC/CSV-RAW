@@ -4,13 +4,13 @@
 
 The pipeline processes CSV files automatically through: **Upload → S3 Raw → SQS → ETL Lambda → S3 Processed (Parquet)**
 
-Three test cases cover all real-world scenarios.
+Four test cases cover all real-world scenarios.
 
 | Link | Description |
 |------|-------------|
 | [ETL Upload Portal](https://d38xe3s2e16qjl.cloudfront.net/) | Upload interface and pipeline monitor |
 | [Dashboard](https://etl-dashboard-app-sdhtogaprtskffwsamfn77.streamlit.app/) | Query processed data via Athena |
-| [Raw CSV Repo](https://github.com/chianhluvC/CSV-RAW) | Sample CSV files for all 3 cases |
+| [Raw CSV Repo](https://github.com/chianhluvC/CSV-RAW) | Sample CSV files for all 4 cases |
 
 ---
 
@@ -19,16 +19,18 @@ Three test cases cover all real-world scenarios.
 1. Open the [ETL Upload Portal](https://d14vqntmuruhab.cloudfront.net/)
 2. Download the CSV repo: [github.com/chianhluvC/CSV-RAW](https://github.com/chianhluvC/CSV-RAW)
    - Click **Code → Download ZIP** → extract
-   - Three folders inside: `case_1/`, `case_2/`, `case_3/`
+   - Four folders inside: `case_1/`, `case_2/`, `case_3/`, `case_4/`
 3. **Reset the pipeline once** before starting:
    - Left sidebar → **Advanced** → **Full Pipeline Reset**
    - Type `delete` → click **Delete everything**
 
-> After this, run Case 1 → 2 → 3 in order. No reset needed between cases.
+> After this, run Case 1 → 2 → 3 → 4 in order. No reset needed between cases.
 
 ---
 
 ## Case 1 — Normal Pipeline (SUCCESS & FAILED)
+
+> **Schema version required: v1** — Before uploading, go to the **Schema** tab → Version History → confirm **v1 is ACTIVE**. If not, click **Activate** on v1 first.
 
 **Goal:** Verify the pipeline handles both valid files and files with data errors.
 
@@ -64,6 +66,8 @@ Open the [Dashboard](https://etl-dashboard-app-sdhtogaprtskffwsamfn77.streamlit.
 ---
 
 ## Case 2 — Dead Letter Queue (System Error)
+
+> **Schema version required: v1** — Before uploading, go to the **Schema** tab → Version History → confirm **v1 is ACTIVE**. If not, click **Activate** on v1 first.
 
 **Goal:** Demonstrate how the pipeline handles Lambda crashes — the failed message lands in the DLQ instead of being lost.
 
@@ -110,6 +114,8 @@ online_retail-2_syserr_.csv     ← special file that triggers a crash
 
 ## Case 3 — Schema Evolution
 
+> **Schema version required: v2** — This case upgrades from v1 to v2. Before starting, confirm **v1 is ACTIVE** (Schema tab → Version History). You will upload `schema_v2.json` as part of the steps below.
+
 **Goal:** Adapt to a new CSV format from a data partner without redeploying the Lambda.
 
 **Files:** `case_3/` folder
@@ -154,12 +160,81 @@ online_retail-22.csv   ← CSV using the new column names
 
 ---
 
+## Case 4 — Schema Evolution: Add New Column
+
+> **Schema version required: v4** — This case upgrades from v2 to v4. Before starting, confirm **v2 is ACTIVE** (Schema tab → Version History). You will upload `schema_v4.json` as part of the steps below.
+
+**Goal:** Extend the pipeline to handle a CSV that adds a brand-new column not present in any previous schema version — no code deployment required.
+
+**Files:** `case_4/` folder
+
+```
+schema_v4.json          ← new mapping config that adds the extra column
+online_retail-23.csv    ← CSV containing the new column
+```
+
+> **Context:** The data partner adds a new field `Region` to their export. The pipeline must map and preserve this column in the output Parquet by uploading an updated schema config only.
+
+### Step 1 — Confirm the current schema (v2 active from Case 3)
+
+1. Go to the **Schema** tab → click **Reload**
+2. Verify the active mapping does **not** include `Region`
+
+### Step 2 — Upload the new schema (v4)
+
+1. Under **Upload New Version**, click **Load from file**
+2. Select `schema_v4.json` from `case_4/`
+3. Validation feedback should show **"Valid — ready to upload as version 4"**
+4. Click **Upload Schema**
+5. Success toast confirms: *"Schema updated to version 4"*
+
+### Step 3 — Confirm the schema changed
+
+1. Click **Reload** in the Active Schema section
+2. The mapping now includes the new column entry for `Region`
+3. Click **Load** in Version History → v4 is listed as **ACTIVE**
+
+### Step 4 — Upload the CSV with the new column
+
+1. Go to the **Home** tab
+2. Select `online_retail-23.csv` from `case_4/`
+3. Click **Upload** → wait for the pipeline to finish
+4. Result: **SUCCESS** — Lambda reads the new `Region` column and the output Parquet contains it alongside all existing columns
+
+### Step 5 — Roll back (optional)
+
+1. **Schema** tab → **Version History** → **Activate** any earlier version to revert
+
+---
+
+## Schema Config Versions
+
+The `schema_config/` directory in this repo tracks every schema version used across all cases.
+
+```
+schema_config/
+├── v1/   ← Original mapping  (used by Case 1 & Case 2)
+├── v2/   ← Renamed columns   (used by Case 3 — UnitCost, Nation)
+├── v3/   ← Optional variant  (needs adjustment to match raw column names before use)
+└── v4/   ← New column added  (used by Case 4 — adds Region)
+```
+
+| Version | Used in | Change |
+|---------|---------|--------|
+| **v1** | Case 1, Case 2 | Baseline mapping — `UnitPrice`, `Country` |
+| **v2** | Case 3 | Renamed columns — `UnitCost → unit_price`, `Nation → country` |
+| **v3** | *(optional)* | Alternative variant — column names must be updated to match actual raw CSV headers before uploading |
+| **v4** | Case 4 | New column added — `Region` mapped to output field |
+
+---
+
 ## Summary
 
-| | Case 1 | Case 2 | Case 3 |
-|--|--------|--------|--------|
-| **Folder** | `case_1/` | `case_2/` | `case_3/` |
-| **Files** | 14 CSV | 7 CSV | 1 CSV + 1 JSON |
-| **Scenario** | Normal pipeline | Lambda crash → DLQ | Source schema change |
-| **Statuses** | SUCCESS + FAILED | TIMEOUT + DLQ | SUCCESS |
-| **Highlight** | Data validation | Dead Letter Queue | Schema evolution |
+| | Case 1 | Case 2 | Case 3 | Case 4 |
+|--|--------|--------|--------|--------|
+| **Folder** | `case_1/` | `case_2/` | `case_3/` | `case_4/` |
+| **Files** | 14 CSV | 7 CSV | 1 CSV + 1 JSON | 1 CSV + 1 JSON |
+| **Scenario** | Normal pipeline | Lambda crash → DLQ | Renamed columns | New column added |
+| **Statuses** | SUCCESS + FAILED | TIMEOUT + DLQ | SUCCESS | SUCCESS |
+| **Highlight** | Data validation | Dead Letter Queue | Schema evolution | Schema evolution |
+| **Schema version** | v1 | v1 | v2 | v4 |

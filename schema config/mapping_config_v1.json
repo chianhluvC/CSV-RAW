@@ -1,0 +1,25 @@
+{
+  "schema_version": "1",
+  "glue_table": "retail_transactions",
+  "column_mapping": {
+    "InvoiceNo":   "invoice_no",
+    "StockCode":   "stock_code",
+    "Description": "product_name",
+    "Quantity":    "quantity",
+    "InvoiceDate": "invoice_date",
+    "UnitPrice":   "unit_price",
+    "CustomerID":  "customer_id",
+    "Country":     "country"
+  },
+  "dtype_hints": {
+    "InvoiceNo":   "str",
+    "StockCode":   "str",
+    "CustomerID":  "str",
+    "Description": "str",
+    "Country":     "str",
+    "Quantity":    "Int64",
+    "UnitPrice":   "float"
+  },
+  "parse_dates": ["InvoiceDate"],
+  "required_columns": ["invoice_no", "stock_code", "quantity", "invoice_date", "unit_price"]
+}
